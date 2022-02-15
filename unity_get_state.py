@@ -95,7 +95,7 @@ def send_data_to_zabbix(zabbix_data, storage_name):
                 f.write("\n".join(zabbix_data))
 
         send_code = subprocess.call([sender_command, "-vv", "-c", config_path, "-s", storage_name, "-T", "-i", temp_file], stdout = subprocess.PIPE, stderr = subprocess.PIPE)
-        os.remove(temp_file)
+        #os.remove(temp_file)
         return send_code
 
 
@@ -166,6 +166,10 @@ def get_status_resources(api_user, api_password, api_ip, api_port, storage_name,
 						link_status = 10
 					elif descriptionIds.find("LINK_DOWN") >=0:
 						link_status = 11
+					elif descriptionIds.find("LINK_DOWN_NOT_IN_USE") >=0:
+						link_status = 12
+					else:
+						link_status = 13
 
 					state_resources.append("%s %s %s %s" % (storage_name, key_status, timestampnow, link_status))
 

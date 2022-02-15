@@ -195,6 +195,8 @@ def get_status_resources(api_user, api_password, api_ip, api_port, storage_name,
 						running_status = 8
 					elif descriptionIds.find("ALRT_DISK_SLOT_EMPTY") >= 0:
 						running_status = 6
+					elif descriptionIds.find("ALRT_SLIC_EMPTY") >= 0:
+						running_status = 6
 					else:
 						running_status = 5
 

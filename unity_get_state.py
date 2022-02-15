@@ -164,12 +164,12 @@ def get_status_resources(api_user, api_password, api_ip, api_port, storage_name,
 					descriptionIds = str(one_object['content']['health']['descriptionIds'][0]) # Convert description to string
 					if descriptionIds.find("LINK_UP") >= 0: # From description i can known, link is up or link is down
 						link_status = 10
-					elif descriptionIds.find("LINK_DOWN") >=0:
-						link_status = 11
-					elif descriptionIds.find("LINK_DOWN_NOT_IN_USE") >=0:
+					elif descriptionIds.find("LINK_DOWN_NOT_IN_USE") >=0: #长文本匹配顺序要在LINK_DOWN之前
 						link_status = 12
+					elif descriptionIds.find("LINK_DOWN") >=0: 
+						link_status = 11
 					else:
-						link_status = 13
+						link_status = 13 #增加了未知状态匹配
 
 					state_resources.append("%s %s %s %s" % (storage_name, key_status, timestampnow, link_status))
 

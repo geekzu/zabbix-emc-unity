@@ -112,7 +112,7 @@ def discovering_resources(api_user, api_password, api_ip, api_port, storage_name
 
 			discovered_resource = []
 			for one_object in resource_info['entries']:
-				if ['lun', 'pool'].count(resource) == 1:
+				if ['lun', 'pool' , 'filesystem'].count(resource) == 1:
 					one_object_list = {}
 					one_object_list["{#ID}"] = one_object['content']['id']
 					one_object_list["{#NAME}"] = one_object['content']['name'].replace(' ', '_')
@@ -141,6 +141,8 @@ def get_status_resources(api_user, api_password, api_ip, api_port, storage_name,
 		for resource in list_resources:
 			# Create different URI for different resources
 			if ['pool'].count(resource) == 1:
+				resource_url = "https://{0}:{1}/api/types/{2}/instances?fields=name,health,sizeTotal,sizeUsed,sizeSubscribed".format(api_ip, api_port, resource)
+			elif ['filesystem'].count(resource) == 1:
 				resource_url = "https://{0}:{1}/api/types/{2}/instances?fields=name,health,sizeTotal,sizeUsed,sizeSubscribed".format(api_ip, api_port, resource)
 			elif ['lun'].count(resource) == 1:
 				resource_url = "https://{0}:{1}/api/types/{2}/instances?fields=name,health,sizeTotal,sizeAllocated".format(api_ip, api_port, resource)
@@ -178,7 +180,18 @@ def get_status_resources(api_user, api_password, api_ip, api_port, storage_name,
 					state_resources.append("%s %s %s %s" % (storage_name, key_sizeAllocated, timestampnow, one_object['content']['sizeAllocated']))
 			elif ['pool'].count(resource) == 1:
 				for one_object in resource_info['entries']:
-					key_health = "health.{0}.[{1}]".format(resource, one_object['content']['name'].replace(' ', '_')) # Use pull name instead lun id on zabbix key
+					key_health = "health.{0}.[{1}]".format(resource, one_object['content']['name'].replace(' ', '_')) # Use pool name instead pool id on zabbix key
+					key_sizeUsedBytes = "sizeUsedBytes.{0}.[{1}]".format(resource, one_object['content']['name'].replace(' ', '_'))
+					key_sizeTotalBytes = "sizeTotalBytes.{0}.[{1}]".format(resource, one_object['content']['name'].replace(' ', '_'))
+					key_sizeSubscribedBytes = "sizeSubscribedBytes.{0}.[{1}]".format(resource, one_object['content']['name'].replace(' ', '_'))
+
+					state_resources.append("%s %s %s %s" % (storage_name, key_health, timestampnow, one_object['content']['health']['value']))
+					state_resources.append("%s %s %s %s" % (storage_name, key_sizeUsedBytes, timestampnow, one_object['content']['sizeUsed']))
+					state_resources.append("%s %s %s %s" % (storage_name, key_sizeTotalBytes, timestampnow, one_object['content']['sizeTotal']))
+					state_resources.append("%s %s %s %s" % (storage_name, key_sizeSubscribedBytes, timestampnow, one_object['content']['sizeSubscribed']))
+			elif ['filesystem'].count(resource) == 1:
+				for one_object in resource_info['entries']:
+					key_health = "health.{0}.[{1}]".format(resource, one_object['content']['name'].replace(' ', '_')) # Use filesystem name instead filesystem id on zabbix key
 					key_sizeUsedBytes = "sizeUsedBytes.{0}.[{1}]".format(resource, one_object['content']['name'].replace(' ', '_'))
 					key_sizeTotalBytes = "sizeTotalBytes.{0}.[{1}]".format(resource, one_object['content']['name'].replace(' ', '_'))
 					key_sizeSubscribedBytes = "sizeSubscribedBytes.{0}.[{1}]".format(resource, one_object['content']['name'].replace(' ', '_'))
@@ -227,7 +240,7 @@ def main():
 	group.add_argument('--status', action='store_true')
 	arguments = unity_parser.parse_args()
 
-	list_resources = ['battery','ssd','ethernetPort','fcPort','sasPort','fan','powerSupply','storageProcessor','lun','pool','dae','dpe','ioModule','lcc','memoryModule','ssc','uncommittedPort','disk']
+	list_resources = ['battery','ssd','ethernetPort','fcPort','sasPort','fan','powerSupply','storageProcessor','lun','pool','filesystem','dae','dpe','ioModule','lcc','memoryModule','ssc','uncommittedPort','disk']
 	if arguments.discovery:
 		result_discovery = discovering_resources(arguments.api_user, arguments.api_password, arguments.api_ip, arguments.api_port, arguments.storage_name, list_resources)
 		print (result_discovery)

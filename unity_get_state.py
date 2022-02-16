@@ -43,17 +43,17 @@ def api_connect(api_user, api_password, api_ip, api_port):
 	try:
 		login = session_unity.get(api_login_url, verify=False)
 	except Exception as oops:
-		unity_logger.error("Connection Error Occurs: {0}".format(oops))
+		unity_logger.error("{0} Connection Error Occurs: {1}".format(api_ip, oops))
 		sys.exit("50")
 
 	if login.status_code != 200:
-		unity_logger.error("Connection Return Code = {0}".format(login.status_code))
+		unity_logger.error("{0} Connection Return Code = {1}".format(api_ip, login.status_code))
 		sys.exit("60")
 	elif login.text.find("isPasswordChangeRequired") >= 0: # If i can find string "isPasswordChangeRequired" therefore login is successful
-		unity_logger.info("Connection established")
+		unity_logger.info("{0} Connection established".format(api_ip))
 		return session_unity
 	else:
-		unity_logger.error("Login Something went wrong")
+		unity_logger.error("{0} Login Something went wrong".format(api_ip))
 		sys.exit("70")
 
 
@@ -65,16 +65,16 @@ def api_logout(api_ip, session_unity):
 	try:
 		logout = session_unity.post(api_logout_url, verify=False)
 	except Exception as oops:
-		unity_logger.error("Logout Error Occurs: {0}".format(oops))
+		unity_logger.error("{0} Logout Error Occurs: {1}".format(api_ip, oops))
 		sys.exit("150")
 
 	if logout.status_code != 200:
-		unity_logger.error("Logout status = {0}".format(logout.status_code))
+		unity_logger.error("{0} Logout status = {1}".format(api_ip, logout.status_code))
 		sys.exit("160")
 	elif logout.text.find("Logout successful") >= 0:
-		unity_logger.info("Logout successful")
+		unity_logger.info("{0} Logout successful".format(api_ip))
 	else:
-		unity_logger.error("Logout Something went wrong")
+		unity_logger.error("{0} Logout Something went wrong".format(api_ip))
 		sys.exit("170")
 
 
@@ -125,7 +125,7 @@ def discovering_resources(api_user, api_password, api_ip, api_port, storage_name
 			timestampnow = int(time.time())
 			xer.append("%s %s %s %s" % (storage_name, resource, timestampnow, converted_resource))
 	except Exception as oops:
-		unity_logger.error("Error occurs in discovering")
+		unity_logger.error("{0} Error occurs in discovering".format(api_ip))
 		sys.exit("1000")
 
 	api_session_logout = api_logout(api_ip, api_session)
@@ -164,12 +164,12 @@ def get_status_resources(api_user, api_password, api_ip, api_port, storage_name,
 					descriptionIds = str(one_object['content']['health']['descriptionIds'][0]) # Convert description to string
 					if descriptionIds.find("LINK_UP") >= 0: # From description i can known, link is up or link is down
 						link_status = 10
-					elif descriptionIds.find("LINK_DOWN_NOT_IN_USE") >=0: #长文本匹配顺序要在LINK_DOWN之前
-						link_status = 12
-					elif descriptionIds.find("LINK_DOWN") >=0: 
+					elif descriptionIds.find("LINK_DOWN") >=0:
 						link_status = 11
+					elif descriptionIds.find("LINK_DOWN_NOT_IN_USE") >=0:
+						link_status = 12
 					else:
-						link_status = 13 #增加了未知状态匹配
+						link_status = 13
 
 					state_resources.append("%s %s %s %s" % (storage_name, key_status, timestampnow, link_status))
 
@@ -222,7 +222,7 @@ def get_status_resources(api_user, api_password, api_ip, api_port, storage_name,
 					state_resources.append("%s %s %s %s" % (storage_name, key_health, timestampnow, one_object['content']['health']['value']))
 					state_resources.append("%s %s %s %s" % (storage_name, key_status, timestampnow, running_status))
 	except Exception as oops:
-		unity_logger.error("Error occured in get state")
+		unity_logger.error("{0} Error occured in get state".format(api_ip))
 		sys.exit("1000")
 
 	api_session_logout = api_logout(api_ip, api_session)
@@ -254,4 +254,3 @@ def main():
 
 if __name__ == "__main__":
 	main()
-

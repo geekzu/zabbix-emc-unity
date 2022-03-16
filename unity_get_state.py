@@ -95,7 +95,7 @@ def send_data_to_zabbix(zabbix_data, storage_name):
                 f.write("\n".join(zabbix_data))
 
         send_code = subprocess.call([sender_command, "-vv", "-c", config_path, "-s", storage_name, "-T", "-i", temp_file], stdout = subprocess.PIPE, stderr = subprocess.PIPE)
-        #os.remove(temp_file)
+        os.remove(temp_file)
         return send_code
 
 
@@ -106,20 +106,39 @@ def discovering_resources(api_user, api_password, api_ip, api_port, storage_name
 	xer = []
 	try:
 		for resource in list_resources:
-			resource_url = "https://{0}:{1}/api/types/{2}/instances?fields=name".format(api_ip, api_port, resource)
+			if ['disk'].count(resource) == 1:
+				resource_url = "https://{0}:{1}/api/types/{2}/instances?fields=name,model".format(api_ip, api_port, resource)
+					#tierType,rpm,rawSize,vendorSize,diskTechnology,name,model,manufacturer,diskGroup[name],vendorSize,bank,bankSlotNumber,bankSlot
+			elif ['pool'].count(resource) == 1:
+				resource_url = "https://{0}:{1}/api/types/{2}/instances?fields=name,health,sizeTotal,sizeUsed,sizeSubscribed".format(api_ip, api_port, resource)
+			elif ['filesystem'].count(resource) == 1:
+				resource_url = "https://{0}:{1}/api/types/{2}/instances?fields=name,health,sizeTotal,sizeUsed,sizeAllocated".format(api_ip, api_port, resource)
+			elif ['lun'].count(resource) == 1:
+				resource_url = "https://{0}:{1}/api/types/{2}/instances?fields=name,health,sizeTotal,sizeAllocated".format(api_ip, api_port, resource)
+			else:
+				resource_url = "https://{0}:{1}/api/types/{2}/instances?fields=name".format(api_ip, api_port, resource)
+			
 			resource_info = api_session.get(resource_url, verify=False)
 			resource_info = json.loads(resource_info.content.decode('utf8'))
-
+			
 			discovered_resource = []
 			for one_object in resource_info['entries']:
 				if ['lun', 'pool' , 'filesystem'].count(resource) == 1:
 					one_object_list = {}
 					one_object_list["{#ID}"] = one_object['content']['id']
 					one_object_list["{#NAME}"] = one_object['content']['name'].replace(' ', '_')
+					one_object_list["{#SIZETOTAL}"] = one_object['content']['sizeTotal'].replace(' ', '_')
+					discovered_resource.append(one_object_list)
+				elif ['disk'].count(resource) == 1:
+					one_object_list = {}
+					one_object_list["{#ID}"] = one_object['content']['id']
+					one_object_list["{#NAME}"] = one_object['content']['name'].replace(' ', '_')
+					one_object_list["{#MODEL}"] = one_object['content']['model'].replace(' ', '_')
 					discovered_resource.append(one_object_list)
 				else:
 					one_object_list = {}
 					one_object_list["{#ID}"] = one_object['content']['id']
+					one_object_list["{#NAME}"] = one_object['content']['name'].replace(' ', '_')
 					discovered_resource.append(one_object_list)
 			converted_resource = convert_to_zabbix_json(discovered_resource)
 			timestampnow = int(time.time())
